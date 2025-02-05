@@ -2,20 +2,27 @@ package main
 
 import (
 	"fmt"
+	"http-server/db"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	http.HandleFunc("/", HttpHandler)
+	db.Init()
+	r := mux.NewRouter()
+	r.HandleFunc("/transcription/{uuid}", TranscriptionHandler).Methods("GET").Schemes("http")
 	fs := http.FileServer(http.Dir("static/"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
-	http.ListenAndServe(":8080", nil)
+
+	// Use the router in the second parameter
+	http.ListenAndServe(":8080", r)
 }
 
-func HttpHandler (w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello from: %s\n", r.URL)
+func TranscriptionHandler (w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	fmt.Fprint(w, "Requested transcription with UUID: "+vars["uuid"])
 }
-
 
 /*
 	If we want to control TLS, keep-alives and compression, should create a Transport
